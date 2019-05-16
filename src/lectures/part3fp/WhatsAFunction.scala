@@ -56,8 +56,9 @@ object WhatsAFunction extends App {
   val specialFunction4: (Int) => Function1[Int, Int] = (v1: Int) => (v2: Int) => v1 + v2
   val specialFunction5: (Int) => ((Int) => Int) = (v1: Int) => (v2: Int) => v1 + v2
   val specialFunction6: Int => Int => Int = (v1: Int) => (v2: Int) => v1 + v2
+  val specialFunction7 = (v1: Int) => (v2: Int) => v1 + v2
 
-  println(specialFunction6(9)(9))
+  println(specialFunction7(9)(9))
 }
 
 
