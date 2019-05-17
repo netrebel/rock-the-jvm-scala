@@ -23,6 +23,15 @@ abstract class MyList[+A] {
 
   def ++[B >: A](list: MyList[B]): MyList[B]
 
+  //HOF
+  def forEach(f: A => Unit): Unit
+
+  def sort(compare: (A, A) => Int): MyList[A]
+
+  def zipWith[B, C](list: MyList[B], zip: (A, B) => C): MyList[C]
+
+  def fold[B](start: B)(operator: (B, A) => B): B
+
 }
 
 case object Empty extends MyList[Nothing] {
@@ -43,6 +52,17 @@ case object Empty extends MyList[Nothing] {
   override def filter(predicate: Nothing => Boolean): MyList[Nothing] = Empty
 
   override def ++[B >: Nothing](list: MyList[B]): MyList[B] = list
+
+  override def forEach(f: Nothing => Unit): Unit = ()
+
+  override def sort(compare: (Nothing, Nothing) => Int): MyList[Nothing] = Empty
+
+  override def zipWith[B, C](list: MyList[B], zip: (Nothing, B) => C): MyList[C] = {
+    if (!list.isEmpty) throw new RuntimeException("Lists do not have the same length")
+    else Empty
+  }
+
+  override def fold[B](start: B)(operator: (B, Nothing) => B): B = start
 }
 
 case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
@@ -82,20 +102,54 @@ case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
     = new Cons(1, new Cons(2, new Cons(3, new Cons(4, new Cons(5)))))
    */
   override def ++[B >: A](list: MyList[B]): MyList[B] = new Cons(h, t ++ list)
+
+  override def forEach(f: A => Unit): Unit = {
+    f(h)
+    t.forEach(f)
+  }
+
+  override def sort(compare: (A, A) => Int): MyList[A] = {
+
+    def insert(x: A, sortedList: MyList[A]): MyList[A] =
+      if (sortedList.isEmpty) new Cons(x, Empty)
+      else if (compare(x, sortedList.head) <= 0) new Cons(x, sortedList)
+      else new Cons(sortedList.head, insert(x, sortedList.tail))
+
+    val sortedTail = t.sort(compare)
+    insert(h, sortedTail)
+  }
+
+  override def zipWith[B, C](list: MyList[B], zip: (A, B) => C): MyList[C] = {
+    if(list.isEmpty) throw new RuntimeException("Lists do not have the same length")
+    else new Cons(zip(h, list.head), t.zipWith(list.tail, zip))
+  }
+
+  /*
+  * [1, 2, 3].fold(0)(+) =
+  * = [2, 3].fold(1)(+) =
+  * = [3].fold(3)(+) =
+  * = [].fold(6)(+) =
+  * = 6
+  * */
+  override def fold[B](start: B)(operator: (B, A) => B): B = {
+    val newStart = operator(start, h)
+    t.fold(newStart)(operator)
+  }
+
 }
 
 
 object ListTest extends App {
-//  val list : Cons[Int] = new Cons[Int](1, new Cons(2, new Cons(3, Empty)))
-//  println(list.tail.head)
-//  println(list.add(4).head)
-//  println(list.isEmpty)
-//  println(list.toString)
+  //  val list : Cons[Int] = new Cons[Int](1, new Cons(2, new Cons(3, Empty)))
+  //  println(list.tail.head)
+  //  println(list.add(4).head)
+  //  println(list.isEmpty)
+  //  println(list.toString)
 
   val listOfIntegers: MyList[Int] = new Cons[Int](1, new Cons(2, new Cons(3, Empty)))
   val cloneOfListOfIntegers: MyList[Int] = new Cons[Int](1, new Cons(2, new Cons(3, Empty)))
   val anotherListOfIntegers: MyList[Int] = new Cons[Int](4, new Cons(5, Empty))
-  val listOfStrings: MyList[String] = new Cons[String]("Hello", new Cons("Scala", new Cons("Rockstar", Empty)))
+  val listOfStrings: MyList[String] = new Cons[String]("Hello", new Cons("Scala", Empty))
   println(listOfIntegers.toString)
   println(listOfStrings.toString)
 
@@ -115,4 +169,12 @@ object ListTest extends App {
   }).toString) //[1 2 2 3 3 4]
 
   println(cloneOfListOfIntegers == listOfIntegers) //true
+
+  listOfIntegers.forEach(println)
+
+  println(listOfIntegers.sort((x, y) => y - x))
+
+  println(anotherListOfIntegers.zipWith[String, String](listOfStrings, (i, str) => i + "-" + str))
+
+  println(listOfIntegers.fold(0)((i, j) => i + j))
 }
