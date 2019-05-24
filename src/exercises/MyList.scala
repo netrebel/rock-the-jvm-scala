@@ -177,4 +177,18 @@ object ListTest extends App {
   println(anotherListOfIntegers.zipWith[String, String](listOfStrings, (i, str) => i + "-" + str))
 
   println(listOfIntegers.fold(0)((i, j) => i + j))
+
+  //for comprehension works because of the signature of map, flatMap
+  val combinations = for {
+    n <- listOfIntegers
+    string <- listOfStrings
+  } yield n + "-" + string
+
+  println(combinations)
+
+  //Comprehensions can be passed as a parameter
+  println(for {
+    n <- listOfIntegers
+    string <- listOfStrings
+  } yield n + "-" + string)
 }
